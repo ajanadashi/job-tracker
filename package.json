@@ -1,0 +1,22 @@
+{
+  "name": "job-tracker-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monolithic job application tracker API with PostgreSQL, a Resend email queue and health monitoring",
+  "main": "src/server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "npm run migrate && node src/server.js",
+    "dev": "node --watch src/server.js",
+    "worker": "node src/worker/index.js",
+    "migrate": "node src/data/migrate.js",
+    "seed": "node src/data/seed.js",
+    "check:layers": "node scripts/check-layers.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "pg": "^8.12.0",
+    "resend": "^4.0.0"
+  }
+}
