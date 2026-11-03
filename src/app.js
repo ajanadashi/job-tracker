@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const health = require('./api/routes/health');
 const applications = require('./api/routes/applications');
@@ -16,7 +17,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => res.json({ name: 'job-tracker-api', health: '/health', docs: 'see README' }));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use(health);
 app.use('/applications', applications);
 app.use('/emails', emails);
