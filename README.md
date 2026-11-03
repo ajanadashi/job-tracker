@@ -4,6 +4,10 @@ A monolithic backend for tracking job applications. Built with **Node.js + Expre
 
 When you create an application or change its status, the endpoint **does not send an email**. It stores an `email_jobs` row in the same DB transaction, and a **background worker** delivers it through Resend with retries.
 
+## Web interface
+
+Open the root URL (`http://localhost:3000/` or your deployed URL) for a browser UI: a board with one column per stage, drag-and-drop status changes, search, add/edit/delete, and the email queue counts. It is a static page in `public/` served by the same Express app and talks to the REST API below, so there is nothing extra to deploy.
+
 ## Architecture
 
 ```mermaid
@@ -136,6 +140,7 @@ Example with [Render](https://render.com) (any host works):
 ## Project structure
 
 ```
+public/            browser UI (single static page)
 migrations/        SQL migrations (run by npm run migrate)
 scripts/           check-layers.js (architecture rule checker)
 src/
