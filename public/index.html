@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1f6; --surface: #ffffff; --ink: #14213d; --muted: #5c6b80; --line: #d9dfe9;
+  --accent: #4b4fe0; --accent-ink: #ffffff; --danger: #c0344b;
+  --wishlist: #7a8aa3; --applied: #3b82f6; --interviewing: #e0a100; --offer: #1f9d63; --rejected: #d4546a; --withdrawn: #98a2b3;
+  --shadow: 0 1px 2px rgba(20,33,61,.08);
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1626; --surface: #18223a; --ink: #e8edf7; --muted: #9aa8c0; --line: #2b3855; --accent: #7b7fff; --accent-ink: #0f1626; --shadow: none; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 28px 20px 60px; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+h1 { font: 700 2.2rem/1.1 var(--display); margin: 0; letter-spacing: -.02em; }
+.sub { color: var(--muted); margin: 6px 0 0; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--danger); }
+input[type=search] { border: 1px solid var(--line); background: var(--surface); padding: 9px 14px; border-radius: 8px; width: 220px; }
+
+.pipeline { display: flex; gap: 4px; margin: 28px 0 8px; height: 56px; }
+.seg { flex: 1 1 0; min-width: 78px; border: 0; border-radius: 6px; color: #fff; text-align: left; padding: 6px 10px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
+.seg b { font: 700 1.25rem var(--display); }
+.seg span { font-size: .8rem; opacity: .95; }
+.seg[aria-pressed=true] { outline: 3px solid var(--ink); outline-offset: 2px; }
+.seg.dim { opacity: .45; }
+.meta { color: var(--muted); font-size: .9rem; min-height: 1.4em; margin-bottom: 14px; }
+
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 12px; align-items: start; }
+.col { background: color-mix(in srgb, var(--surface) 55%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-height: 140px; border-top: 4px solid var(--c); }
+.col.over { background: var(--surface); border-color: var(--c); }
+.col h2 { font: 600 1rem var(--display); margin: 0 0 10px; display: flex; justify-content: space-between; }
+.col h2 small { color: var(--muted); font: 500 .9rem var(--body); }
+.empty { color: var(--muted); font-size: .9rem; padding: 6px 2px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); cursor: grab; }
+.card.dragging { opacity: .4; }
+.card h3 { margin: 0; font: 600 1.05rem var(--display); }
+.card .pos { margin: 2px 0 8px; }
+.card .info { color: var(--muted); font-size: .88rem; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.card .note { font-size: .88rem; margin: 8px 0 0; color: var(--muted); border-left: 3px solid var(--line); padding-left: 8px; white-space: pre-wrap; }
+.card a { color: var(--accent); }
+.card .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.card select { flex: 1; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 6px; min-width: 0; }
+.icon { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 4px 6px; border-radius: 6px; font-size: .88rem; }
+.icon:hover { color: var(--ink); background: var(--bg); }
+
+.welcome { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; margin-bottom: 16px; }
+.welcome h2 { font: 700 1.4rem var(--display); margin: 0 0 6px; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); width: min(560px, 94vw); padding: 0; }
+dialog::backdrop { background: rgba(10,16,30,.55); }
+form { padding: 22px; display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+form h2 { grid-column: 1 / -1; margin: 0; font: 700 1.3rem var(--display); }
+label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; }
+label.full { grid-column: 1 / -1; }
+label small { font-weight: 400; color: var(--muted); }
+form input, form select, form textarea { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 10px; font-weight: 400; width: 100%; }
+form textarea { min-height: 80px; resize: vertical; }
+.formactions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; }
+.formerror { grid-column: 1 / -1; color: var(--danger); font-size: .9rem; margin: 0; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 8px; max-width: 90vw; z-index: 20; }
+
+@media (max-width: 760px) {
+  .board { grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; }
+  .pipeline { flex-wrap: wrap; height: auto; }
+  .seg { min-height: 52px; flex-basis: 30%; }
+  form { grid-template-columns: 1fr; }
+  input[type=search] { width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) { .col { transition: background .15s, border-color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Job Tracker</h1>
+      <p class="sub">Keep every application in one place. Drag a card to a new column to change its status.</p>
+    </div>
+    <div class="actions">
+      <input type="search" id="search" placeholder="Search company or role" aria-label="Search applications">
+      <button class="btn primary" id="add">Add application</button>
+    </div>
+  </header>
+
+  <div class="pipeline" id="pipeline" role="group" aria-label="Filter by status"></div>
+  <div class="meta" id="meta">Loading your applications…</div>
+  <div id="welcome"></div>
+  <main class="board" id="board"></main>
+</div>
+
+<dialog id="dialog">
+  <form id="form" method="dialog">
+    <h2 id="dialogTitle">Add application</h2>
+    <label>Company *<input name="company" required maxlength="200"></label>
+    <label>Position *<input name="position" required maxlength="200"></label>
+    <label>Status<select name="status" id="statusField"></select></label>
+    <label>Date applied<input type="date" name="appliedAt"></label>
+    <label>Location<input name="location" maxlength="200"></label>
+    <label>Salary range<input name="salaryRange" maxlength="200"></label>
+    <label class="full">Job posting link<input type="url" name="url" placeholder="https://"></label>
+    <label class="full">Email me updates at <small>Optional. We send a confirmation now and an email whenever the status changes.</small><input type="email" name="notifyEmail" placeholder="you@example.com"></label>
+    <label class="full">Notes<textarea name="notes" maxlength="5000"></textarea></label>
+    <p class="formerror" id="formError" role="alert"></p>
+    <div class="formactions">
+      <button type="button" class="btn" id="cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="save">Save application</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const STAGES = [
+  ['wishlist', 'Wishlist'], ['applied', 'Applied'], ['interviewing', 'Interviewing'],
+  ['offer', 'Offer'], ['rejected', 'Rejected'], ['withdrawn', 'Withdrawn'],
+];
+const label = Object.fromEntries(STAGES);
+const $ = (id) => document.getElementById(id);
+let apps = [], filter = null, query = '', editingId = null, dragId = null;
+
+function el(tag, props = {}, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') node.className = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined && v !== false) node.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid) node.append(kid);
+  return node;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  if (res.status === 204) return null;
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const details = body?.error?.details?.map((d) => `${d.field} ${d.message}`).join('; ');
+    throw new Error(details || body?.error?.message || `Request failed (${res.status})`);
+  }
+  return body;
+}
+
+function toast(message) {
+  const t = el('div', { class: 'toast', role: 'status' }, message);
+  document.body.append(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+async function load() {
+  const slow = setTimeout(() => { $('meta').textContent = 'Waking up the server. The free plan can take up to a minute on the first visit.'; }, 3000);
+  try {
+    apps = (await api('/applications?limit=100')).data;
+    render();
+    loadEmailStats();
+  } catch (err) {
+    $('meta').textContent = `Could not load applications: ${err.message}. Refresh to try again.`;
+  } finally { clearTimeout(slow); }
+}
+
+async function loadEmailStats() {
+  try {
+    const s = await api('/emails/stats');
+    if (s.sent + s.pending + s.failed > 0) {
+      $('meta').dataset.mail = `Emails: ${s.sent} sent, ${s.pending} waiting, ${s.failed} failed.`;
+      updateMeta();
+    }
+  } catch { /* stats are optional */ }
+}
+
+function visible() {
+  const q = query.toLowerCase();
+  return apps.filter((a) => (!q || a.company.toLowerCase().includes(q) || a.position.toLowerCase().includes(q)));
+}
+
+function updateMeta() {
+  const shown = visible().length;
+  const parts = [`${shown} of ${apps.length} application${apps.length === 1 ? '' : 's'} shown`];
+  if (filter) parts.push(`Filtered to ${label[filter].toLowerCase()}`);
+  if ($('meta').dataset.mail) parts.push($('meta').dataset.mail);
+  $('meta').textContent = parts.join('. ') + '.';
+}
+
+function render() {
+  const list = visible();
+  const counts = Object.fromEntries(STAGES.map(([k]) => [k, list.filter((a) => a.status === k).length]));
+
+  $('pipeline').replaceChildren(...STAGES.map(([key, name]) =>
+    el('button', {
+      class: 'seg' + (filter && filter !== key ? ' dim' : ''), style: `background:var(--${key})`,
+      'aria-pressed': filter === key ? 'true' : 'false',
+      title: `Show only ${name.toLowerCase()}`,
+      onclick: () => { filter = filter === key ? null : key; render(); },
+    }, el('b', {}, String(counts[key])), el('span', {}, name))));
+
+  $('welcome').replaceChildren(apps.length ? '' : el('div', { class: 'welcome' },
+    el('h2', {}, 'Add your first application'),
+    el('p', {}, 'Track the company, the role and where you are in the process.'),
+    el('button', { class: 'btn primary', onclick: () => openDialog() }, 'Add application')));
+
+  const stages = STAGES.filter(([k]) => !filter || filter === k);
+  $('board').replaceChildren(...stages.map(([key, name]) => {
+    const items = list.filter((a) => a.status === key);
+    const col = el('section', { class: 'col', style: `--c:var(--${key})`, 'aria-label': name },
+      el('h2', {}, name, el('small', {}, String(items.length))),
+      items.length ? items.map(card) : el('div', { class: 'empty' }, 'Nothing here yet'));
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('over'));
+    col.addEventListener('drop', (e) => { e.preventDefault(); col.classList.remove('over'); if (dragId) changeStatus(dragId, key); });
+    return col;
+  }));
+  updateMeta();
+}
+
+function card(a) {
+  const info = [a.location, a.salaryRange, a.appliedAt && `Applied ${a.appliedAt}`].filter(Boolean).map((t) => el('span', {}, t));
+  const select = el('select', { 'aria-label': `Status for ${a.company}`, onchange: (e) => changeStatus(a.id, e.target.value) },
+    STAGES.map(([k, n]) => el('option', { value: k, selected: k === a.status }, n)));
+  const node = el('article', { class: 'card', draggable: 'true' },
+    el('h3', {}, a.company),
+    el('div', { class: 'pos' }, a.position),
+    info.length ? el('div', { class: 'info' }, info) : null,
+    a.url ? el('div', { class: 'info' }, el('a', { href: a.url, target: '_blank', rel: 'noopener noreferrer' }, 'Job posting')) : null,
+    a.notes ? el('p', { class: 'note' }, a.notes) : null,
+    el('div', { class: 'row' }, select,
+      el('button', { class: 'icon', onclick: () => openDialog(a) }, 'Edit'),
+      el('button', { class: 'icon', onclick: () => remove(a) }, 'Delete')));
+  node.addEventListener('dragstart', () => { dragId = a.id; node.classList.add('dragging'); });
+  node.addEventListener('dragend', () => { dragId = null; node.classList.remove('dragging'); });
+  return node;
+}
+
+async function changeStatus(id, status) {
+  const app = apps.find((a) => a.id === id);
+  if (!app || app.status === status) return render();
+  try {
+    const updated = await api(`/applications/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    apps = apps.map((a) => (a.id === id ? updated : a));
+    toast(updated.notifyEmail ? `Moved to ${label[status].toLowerCase()}. Status email queued.` : `Moved to ${label[status].toLowerCase()}.`);
+    render(); loadEmailStats();
+  } catch (err) { toast(err.message); render(); }
+}
+
+async function remove(a) {
+  if (!confirm(`Delete ${a.position} at ${a.company}?`)) return;
+  try {
+    await api(`/applications/${a.id}`, { method: 'DELETE' });
+    apps = apps.filter((x) => x.id !== a.id);
+    toast('Application deleted.'); render();
+  } catch (err) { toast(err.message); }
+}
+
+function openDialog(a = null) {
+  editingId = a ? a.id : null;
+  $('dialogTitle').textContent = a ? 'Edit application' : 'Add application';
+  $('save').textContent = 'Save application';
+  $('formError').textContent = '';
+  const f = $('form');
+  f.reset();
+  $('statusField').replaceChildren(...STAGES.map(([k, n]) => el('option', { value: k }, n)));
+  $('statusField').value = a ? a.status : 'applied';
+  if (a) for (const name of ['company', 'position', 'appliedAt', 'location', 'salaryRange', 'url', 'notifyEmail', 'notes']) f.elements[name].value = a[name] ?? '';
+  $('dialog').showModal();
+  f.elements.company.focus();
+}
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData($('form')));
+  const optional = ['location', 'salaryRange', 'url', 'notifyEmail', 'notes'];
+  const body = {};
+  for (const [k, v] of Object.entries(data)) {
+    const value = v.trim();
+    if (optional.includes(k)) { if (value || editingId) body[k] = value || null; }
+    else if (value) body[k] = value;
+  }
+  $('save').disabled = true;
+  try {
+    if (editingId) {
+      const updated = await api(`/applications/${editingId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      apps = apps.map((a) => (a.id === editingId ? updated : a));
+      toast('Changes saved.');
+    } else {
+      const created = await api('/applications', { method: 'POST', body: JSON.stringify(body) });
+      apps = [created, ...apps];
+      toast(created.notifyEmail ? 'Application added. Confirmation email queued.' : 'Application added.');
+    }
+    $('dialog').close(); render(); loadEmailStats();
+  } catch (err) { $('formError').textContent = err.message; }
+  finally { $('save').disabled = false; }
+});
+
+$('cancel').addEventListener('click', () => $('dialog').close());
+$('add').addEventListener('click', () => openDialog());
+$('search').addEventListener('input', (e) => { query = e.target.value.trim(); render(); });
+load();
+</script>
+</body>
+</html>
